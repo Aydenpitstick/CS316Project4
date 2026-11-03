@@ -2,22 +2,20 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Scanner;
 
 public class ClientNIST {
     public static void main(String[] args) throws IOException {
-        if (args.length != 2){
-            System.out.println("Need 2 Arguments: ServerIP & ServerPort");
-            return;
-        }
-        Scanner keyboard = new Scanner(System.in);
-        String input = keyboard.nextLine();
+
         InetAddress serverIP = InetAddress.getByName(args[0]);
         int serverPort = Integer.parseInt(args[1]);
+        byte[] empty = new byte[0];
         DatagramPacket requestPacket = new DatagramPacket(
-                input.getBytes(),
-                input.getBytes().length,
+                empty,
+                0,
                 serverIP,
                 serverPort
         );
@@ -25,16 +23,25 @@ public class ClientNIST {
         // OS assigns the port number for client
         clientSocket.send(requestPacket);
 
-        DatagramPacket serverReply = new DatagramPacket(new byte[1024], 1024);
+        byte[] buf = new byte[4];
+        DatagramPacket serverReply = new DatagramPacket(buf, buf.length);
         clientSocket.receive(serverReply);
 
-        byte[] payload = Arrays.copyOf(
+        byte[] payload = Arrays.copyOfRange(
                 serverReply.getData(),
-                serverReply.getLength()
+                serverReply.getOffset(),
+                serverReply.getOffset() + 4
         );
 
-        String replyMessage = new String(payload);
-        System.out.println("Server Reply" + replyMessage);
+        int value = ByteBuffer.wrap(payload).getInt();
+        long seconds = Integer.toUnsignedLong(value);
+
+        ZonedDateTime epoch = ZonedDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime eastern = epoch.plusSeconds(seconds).withZoneSameInstant((ZoneId.of("America/Indiana/Indianapolis")));
+
+        System.out.println(seconds);
+        System.out.println(eastern);
+
         clientSocket.close();
     }
 }

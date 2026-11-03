@@ -1,11 +1,41 @@
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.time.ZonedDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 
 public class ServerNIST {
     public static final int PORT = 37;
 
     public static void main(String[] args) throws Exception {
+
+        DatagramSocket serverSocket = new DatagramSocket(PORT);
+
+        DatagramPacket clientRequest = new DatagramPacket(new byte[1024], 1024);
+
+        while (true){ // Need to force close silver when using while true loop
+            serverSocket.receive(clientRequest); //how to receive UDP packet
+            InetAddress clientIP = clientRequest.getAddress(); //Extract IP from Client
+            int clientPort = clientRequest.getPort();
+
+            byte[] payload = Arrays.copyOf(
+                    clientRequest.getData(),
+                    clientRequest.getLength()
+            );
+
+            String clientMessage = new String(payload);
+            System.out.println("Client Message: "+ clientMessage);
+            String replyMessage = clientMessage.toUpperCase();
+            DatagramPacket replyPacket = new DatagramPacket(
+                    replyMessage.getBytes(),
+                    replyMessage.getBytes().length,
+                    clientIP,
+                    clientPort
+            );
+            serverSocket.send(replyPacket);
+
         /*
          * TODO:
          *  - Create a DatagramSocket to listen on the specified port
@@ -14,6 +44,7 @@ public class ServerNIST {
          *  - Send the reply with the 4-byte array as application data
          *    back to the client
          */
+        }
     }
 
     /**
