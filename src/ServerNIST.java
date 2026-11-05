@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.time.ZonedDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 
 public class ServerNIST {
     public static final int PORT = 37;
@@ -13,24 +12,21 @@ public class ServerNIST {
 
         DatagramSocket serverSocket = new DatagramSocket(PORT);
 
-        DatagramPacket clientRequest = new DatagramPacket(new byte[1024], 1024);
 
         while (true){ // Need to force close silver when using while true loop
+            DatagramPacket clientRequest = new DatagramPacket(new byte[1024], 1024);
+
             serverSocket.receive(clientRequest); //how to receive UDP packet
+
             InetAddress clientIP = clientRequest.getAddress(); //Extract IP from Client
+
             int clientPort = clientRequest.getPort();
 
-            byte[] payload = Arrays.copyOf(
-                    clientRequest.getData(),
-                    clientRequest.getLength()
-            );
+            byte[] timeBytes = getCurrentTimeBytes();
 
-            String clientMessage = new String(payload);
-            System.out.println("Client Message: "+ clientMessage);
-            String replyMessage = clientMessage.toUpperCase();
             DatagramPacket replyPacket = new DatagramPacket(
-                    replyMessage.getBytes(),
-                    replyMessage.getBytes().length,
+                    timeBytes,
+                    timeBytes.length,
                     clientIP,
                     clientPort
             );
